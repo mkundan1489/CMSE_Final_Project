@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
 import plotly.express as px
-from imblearn.over_sampling import SMOTENC, RandomOverSampler, KMeansSMOTE
+from imblearn.over_sampling import RandomOverSampler
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import LabelEncoder
 sns.set()
@@ -16,7 +16,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import roc_auc_score, roc_curve, classification_report
+from sklearn.metrics import classification_report
 
 intro = st.sidebar.button("INTRODUCTION")
 if intro:
