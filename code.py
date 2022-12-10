@@ -1,15 +1,12 @@
 import pandas as pd
 from PIL import Image
 import pickle
-#import webbrowser
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import streamlit as st
-# from sklearn import metrics
-# from sklearn.utils import resample
+import plotly.express as px
 from imblearn.over_sampling import SMOTENC, RandomOverSampler, KMeansSMOTE
-# from pympler.util.bottle import redirect
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import LabelEncoder
 sns.set()
@@ -32,7 +29,6 @@ if intro:
         "The dataset is obtained from the Kaggle. The Purpose of the this webb app is explore the different machine "
         "learning models and predict if the patients have thyroid.")
     st.write("Click on 'Features', to understand the features of the dataset.")
-
 
 ft = st.sidebar.button('FEATURES')
 if ft:
@@ -70,12 +66,12 @@ for column in data.columns:
 data['sex'] = data['sex'].map({'F': 0, 'M': 1})
 
 # except for 'Sex' column all the other columns with two categorical data have same value 'f' and 't'.
-# so instead of mapping indvidually, let's do a smarter work
+# so instead of mapping individually, let's do a smarter work
 for column in data.columns:
     if len(data[column].unique()) == 2:
         data[column] = data[column].map({'f': 0, 't': 1})
 
-# this will map all the rest of the columns as we require. Now there are handful of column left with more than 2 categories.
+# this will map all the rest of the columns as we require.
 
 data = pd.get_dummies(data, columns=['referral_source'])
 
@@ -123,10 +119,13 @@ def svm_classifier(X_train, X_test, y_train, y_test):
     st.write("Test Score", ":", classifier_svm.score(X_test, y_test))
     st.title("Confusion Matrix")
     st.write(cm)
+    st.plotly_chart(px.imshow(cm, color_continuous_scale='Viridis', origin='lower', text_auto=True))
     report = classification_report(y_test, y_pred, output_dict=True)
     df_forest = pd.DataFrame(report).transpose()
     st.title("Classification Report")
     st.write(df_forest)
+    st.write("Above Classification report gives the information about precision, f1-score, recall, and support of all "
+             "the classes.")
 
 
 def knn_classifier(X_train, X_test, y_train, y_test):
@@ -138,10 +137,13 @@ def knn_classifier(X_train, X_test, y_train, y_test):
     st.write("Test Score", ":", classifier_knn.score(X_test, y_test))
     st.title("Confusion Matrix")
     st.write(cm)
+    st.plotly_chart(px.imshow(cm, color_continuous_scale='Viridis', origin='lower', text_auto=True))
     report = classification_report(y_test, y_pred, output_dict=True)
     df_forest = pd.DataFrame(report).transpose()
     st.title("Classification Report")
     st.write(df_forest)
+    st.write("Above Classification report gives the information about precision, f1-score, recall, and support of all "
+             "the classes.")
 
 
 def tree_classifier(X_train, X_test, y_train, y_test):
@@ -153,10 +155,13 @@ def tree_classifier(X_train, X_test, y_train, y_test):
     st.write("Test Score", ":", classifier_tree.score(X_test, y_test))
     st.title("Confusion Matrix")
     st.write(cm)
+    st.plotly_chart(px.imshow(cm, color_continuous_scale='Viridis', origin='lower', text_auto=True))
     report = classification_report(y_test, y_pred, output_dict=True)
     df_forest = pd.DataFrame(report).transpose()
     st.title("Classification Report")
     st.write(df_forest)
+    st.write("Above Classification report gives the information about precision, f1-score, recall, and support of all "
+             "the classes.")
 
 
 def forest_classifier(X_train, X_test, y_train, y_test):
@@ -168,10 +173,13 @@ def forest_classifier(X_train, X_test, y_train, y_test):
     st.write("Test Score", ":", classifier_forest.score(X_test, y_test))
     st.title("Confusion Matrix")
     st.write(cm)
+    st.plotly_chart(px.imshow(cm, color_continuous_scale='Viridis', origin='lower', text_auto=True))
     report = classification_report(y_test, y_pred, output_dict=True)
     df_forest = pd.DataFrame(report).transpose()
     st.title("Classification Report")
     st.write(df_forest)
+    st.write("Above Classification report gives the information about precision, f1-score, recall, and support of all "
+             "the classes.")
 
 
 mod = st.sidebar.checkbox("Check here to build models")
@@ -245,6 +253,19 @@ if comp:
     st.pyplot(fig)
 
 usr = st.sidebar.checkbox("User Prediction")
+
+
+def result_fun(result):
+    if result == 'Negative':
+        st.write("Negative: The person has no sign of Thyroid.")
+    if result == 'Compensated Hypothyroid':
+        st.write('The person has been identified with Compensated Hypothyroid')
+    if result == 'Secondary Hypothyroid':
+        st.write('The person has been identified with Secondary Hypothyroid')
+    if result == 'Primary Hypothyroid':
+        st.write('The person has been identified with Primary Hypothyroid')
+
+
 if usr:
     st.write('We predict wether the patients have Thyroid. Negative means he/she does not have any kind of thyroid. '
              'Thyroid, here we predict are: Primary Hypothyroid, Secondary Hypothyroid, Compensated Hypothyroid.')
@@ -302,13 +323,12 @@ if usr:
                 model = open('thyroid_forest.pkl', 'rb')
                 forest = pickle.load(model)
                 if sex == 'Female':
-                    st.write((forest.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]])))
+                    result = (forest.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]]))
                 if sex == 'Male':
-                    st.write((forest.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]])))
+                    result = (forest.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]]))
+                result_fun(result)
 
-
-
-            #Decision Tree
+            # Decision Tree
             if mod == 'Decision Tree':
                 classifier_tree = DecisionTreeClassifier(criterion='entropy')
                 classifier_tree.fit(X_train, y_train)
@@ -318,11 +338,11 @@ if usr:
                 model = open('thyroid_tree.pkl', 'rb')
                 forest = pickle.load(model)
                 if sex == 'Female':
-                    st.write((classifier_tree.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]])))
+                    result = (classifier_tree.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]]))
                 if sex == 'Male':
-                    st.write((classifier_tree.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]])))
-
-            #KNN
+                    result = (classifier_tree.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]]))
+                result_fun(result)
+            # KNN
             if mod == 'KNN':
                 classifier_knn = KNeighborsClassifier(metric='minkowski', p=2)
                 classifier_knn.fit(X_train, y_train)
@@ -332,12 +352,11 @@ if usr:
                 model = open('thyroid_knn.pkl', 'rb')
                 forest = pickle.load(model)
                 if sex == 'Female':
-                    st.write((classifier_knn.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]])))
+                    result = (classifier_knn.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]]))
                 if sex == 'Male':
-                    st.write((classifier_knn.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]])))
-
-
-            #SVM
+                    result = (classifier_knn.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]]))
+                result_fun(result)
+            # SVM
             if mod == 'SVM':
                 classifier_svm = SVC(kernel='rbf', random_state=0)
                 classifier_svm.fit(X_train, y_train)
@@ -347,6 +366,7 @@ if usr:
                 model = open('thyroid_svm.pkl', 'rb')
                 forest = pickle.load(model)
                 if sex == 'Female':
-                    st.write((classifier_svm.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]])))
+                    result = (classifier_svm.predict([[age, sex_n, sick, preg, sur, goi, tum, T3, TT4, T4U, FTI]]))
                 if sex == 'Male':
-                    st.write((classifier_svm.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]])))
+                    result = (classifier_svm.predict([[age, sex_n, sick, 0, sur, goi, tum, T3, TT4, T4U, FTI]]))
+                result_fun(result)
